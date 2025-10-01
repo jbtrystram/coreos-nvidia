@@ -32,8 +32,9 @@ tar -cJf SOURCES/nvidia-kmod-${DRIVER_VERSION}-${BUILD_ARCH}.tar.xz nvidia-kmod-
 mv kmod-nvidia.spec SPECS/
 
 # create the signing key to sign the RPM
+# TODO source the config from somewhere more robust ?
 openssl req -x509 -new -nodes -utf8 -sha256 -days 36500 -batch \
-      -config ${HOME}/x509-configuration.ini \
+      -config ../x509-config.ini \
       -outform DER -out SOURCES/public_key.der \
       -keyout SOURCES/private_key.priv
 

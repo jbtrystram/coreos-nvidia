@@ -12,3 +12,7 @@ https://developer.download.nvidia.com/compute/cuda/repos/fedora42/x86_64/cuda-fe
 investigate VGPU vs passtrough
 add open driver for vgpu
  do we also want nvidia-fabric-manager and libnvidia-nscq ?
+
+
+ Disk images with bootc install to disk
+ Make sure to bake kargs > https://docs.fedoraproject.org/en-US/bootc/kernel-args/
