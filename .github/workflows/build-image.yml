@@ -1,0 +1,57 @@
+name: Build image
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  # Run daily at a specific time (e.g., 04:00 AM UTC)
+  schedule:
+    - cron: '0 4 * * *'
+
+permissions:
+  contents: read
+
+env:
+  BASE_IMAGE: quay.io/fedora/fedora-coreos
+  BUILDER_IMAGE: localhost/builder:latest
+  FINAL_IMAGE: quay.io/coreos-devel/fedora-coreos-nvidia
+
+jobs:
+  podman_build:
+    name: Podman Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        STREAM: [testing-devel, rawhide, stable]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Podman Login to Quay
+        # This step uses the secret and is executed before pushing
+        run: |
+          # Use "echo" and pipe the secret to "podman login --password-stdin"
+          # This avoids exposing the secret in command logs.
+          echo "$PASSWORD" | podman login --username $USERNAME --password-stdin quay.io
+        env:
+          USERNAME: "${{ secrets.QUAY_USERNAME }}"
+          PASSWORD: "${{ secrets.QUAY_TOKEN }}"
+
+      - name: Build the builder image
+        run: |
+          podman build --build-arg BASE_IMAGE="$BASE_IMAGE:${{ matrix.STREAM }}" -f Containerfile.builder -t $BUILDER_IMAGE
+
+      - name: Build FCOS image with NVIDIA bits
+        run: |
+          podman build --build-arg BUILDER_IMAGE="$BUILDER_IMAGE" --build-arg BASE_IMAGE="$BASE_IMAGE:${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:${{ matrix.STREAM }}
+
+      - name: Sanity-check
+        run: |
+          podman run --rm $FINAL_IMAGE:${{ matrix.STREAM }} echo hello
+
+      - name: Push image to Quay
+        if: github.event_name == 'push' || github.event_name == 'schedule'
+        run: |
+          podman push $FINAL_IMAGE:${{ matrix.STREAM }}
