@@ -7,7 +7,7 @@ This work is primarily inspired by the methodology used in the RHEL AI [nvidia-b
 
 ## Building locally
 ```bash
-BUILDER_IMAGE=localhost/builder:latest
-podman build -f Containerfile.builder -t $BUILDER_IMAGE
-podman build -f Containerfile -t localhost/fedora-coreos-nvidia:testing-devel
+source build-args.conf
+podman build --build-arg-file build-args.conf -f Containerfile.builder -t $BUILDER_IMAGE
+podman build --build-arg-file build-args.conf -f Containerfile -t localhost/fedora-coreos-nvidia:testing-devel
 ```

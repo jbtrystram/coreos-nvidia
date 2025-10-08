@@ -13,8 +13,6 @@ permissions:
   contents: read
 
 env:
-  BASE_IMAGE: quay.io/fedora/fedora-coreos
-  BUILDER_IMAGE: localhost/builder:latest
   FINAL_IMAGE: quay.io/coreos-devel/fedora-coreos-nvidia
 
 jobs:
@@ -41,11 +39,15 @@ jobs:
 
       - name: Build the builder image
         run: |
-          podman build --build-arg BASE_IMAGE="$BASE_IMAGE:${{ matrix.STREAM }}" -f Containerfile.builder -t $BUILDER_IMAGE
+          source build-args.conf
+          ROOT_IMAGE="${BASE_IMAGE%:*}"
+          podman build --build-arg-file build-args.conf --build-arg BASE_IMAGE="$ROOT_IMAGE:${{ matrix.STREAM }}" -f Containerfile.builder -t $BUILDER_IMAGE
 
       - name: Build FCOS image with NVIDIA bits
         run: |
-          podman build --build-arg BUILDER_IMAGE="$BUILDER_IMAGE" --build-arg BASE_IMAGE="$BASE_IMAGE:${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:${{ matrix.STREAM }}
+          source build-args.conf
+          ROOT_IMAGE="${BASE_IMAGE%:*}"
+          podman build --build-arg-file build-args.conf --build-arg BASE_IMAGE="$ROOT_IMAGE:${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:${{ matrix.STREAM }}
 
       - name: Sanity-check
         run: |
