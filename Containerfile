@@ -1,25 +1,25 @@
-ARG BUILDER_IMAGE=localhost/builder:latest
-ARG BASE_IMAGE=quay.io/coreos-devel/fedora-coreos:testing-devel
-FROM $BUILDER_IMAGE as builder
+ARG BUILDER_IMAGE
+ARG BASE_IMAGE
 
-COPY install/build-nvidia-kmod.sh /nvidia/
-COPY install/x509-config.ini /nvidia/
-WORKDIR /nvidia
-RUN /nvidia/build-nvidia-kmod.sh
- 
+FROM ${BUILDER_IMAGE} as builder
+
+ARG DRIVER_VERSION
+
+COPY scripts/build-kmod-nvidia-open-dkms.sh /
+RUN /build-kmod-nvidia-open-dkms.sh
+
 FROM ${BASE_IMAGE}
 
-COPY --from=builder /nvidia-kmod.rpm /
-COPY install/ /install
+ARG DRIVER_VERSION
 
-WORKDIR /install
-RUN ./nvidia-cuda.sh
+COPY --from=builder /usr/src/nvidia-${DRIVER_VERSION}/ /usr/src/nvidia-${DRIVER_VERSION}/
+COPY --from=builder /var/lib/dkms/ /var/lib/dkms/
 
-RUN rm -rf /install /nvidia-kmod.rpm
+# We run the DKMS installation
+COPY scripts/install-kmod-nvidia-open-dkms.sh /
+RUN /install-kmod-nvidia-open-dkms.sh && rm -f /install-kmod-nvidia-open-dkms.sh
 
-COPY nvidia-toolkit-firstboot.service /usr/lib/systemd/system/nvidia-toolkit-firstboot.service
-RUN ln -s /usr/lib/systemd/system/nvidia-toolkit-firstboot.service /usr/lib/systemd/system/basic.target.wants/nvidia-toolkit-firstboot.service
+#COPY nvidia-toolkit-firstboot.service /usr/lib/systemd/system/nvidia-toolkit-firstboot.service
+#RUN ln -s /usr/lib/systemd/system/nvidia-toolkit-firstboot.service /usr/lib/systemd/system/basic.target.wants/nvidia-toolkit-firstboot.service
 
-RUN dnf clean all \ 
-   && bootc container lint
-
+RUN bootc container lint

@@ -1,9 +1,5 @@
-
 service to write device info : 
 nvidia-toolkit-firstboot.service
-
-arg file
-
 
 repo : https://developer.download.nvidia.com/compute/cuda/repos/fedora42/x86_64/
 https://developer.download.nvidia.com/compute/cuda/repos/fedora42/x86_64/cuda-fedora42.repo
