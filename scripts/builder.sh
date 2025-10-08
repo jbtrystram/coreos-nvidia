@@ -1,10 +1,10 @@
 #!/usr/bin/bash
 
-export KVER=$(rpm -q --qf "%{VERSION}" kernel-core)
+K_VER=$(rpm -q --qf "%{VERSION}" kernel-core)
 
 dnf -y install \
   rpmbuild \
   elfutils-libelf-devel \
-  kernel-devel-${KVER} \
+  kernel-devel-${K_VER} \
   binutils-gold \
   && dnf clean all
