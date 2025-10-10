@@ -23,9 +23,6 @@ RUN /install-kmod-nvidia-open-dkms.sh && rm -f /install-kmod-nvidia-open-dkms.sh
 COPY scripts/install-nvidia-toolkit.sh /
 RUN /install-nvidia-toolkit.sh && rm -f /install-nvidia-toolkit.sh
 
-# TODO: remove when development is complete
-RUN dnf install -y tmux && dnf clean all && rm -rf /var/lib/dnf /var/cache/* /var/log/*
-
 #COPY nvidia-toolkit-firstboot.service /usr/lib/systemd/system/nvidia-toolkit-firstboot.service
 #RUN ln -s /usr/lib/systemd/system/nvidia-toolkit-firstboot.service /usr/lib/systemd/system/basic.target.wants/nvidia-toolkit-firstboot.service
 
