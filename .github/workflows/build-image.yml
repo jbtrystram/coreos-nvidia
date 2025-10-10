@@ -47,7 +47,9 @@ jobs:
         run: |
           source build-args.conf
           ROOT_IMAGE="${BASE_IMAGE%:*}"
-          podman build --build-arg-file build-args.conf --build-arg BASE_IMAGE="$ROOT_IMAGE:${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:${{ matrix.STREAM }}
+          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          podman build --build-arg-file build-args.conf --build-arg BASE_IMAGE="$ROOT_IMAGE:${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:$FINAL_IMAGE_TAG
 
       - name: Sanity-check
         run: |
@@ -56,4 +58,6 @@ jobs:
       - name: Push image to Quay
         if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
-          podman push $FINAL_IMAGE:${{ matrix.STREAM }}
+          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          podman push $FINAL_IMAGE:$FINAL_IMAGE_TAG
