@@ -53,7 +53,9 @@ jobs:
 
       - name: Sanity-check
         run: |
-          podman run --rm $FINAL_IMAGE:${{ matrix.STREAM }} echo hello
+          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          podman run --rm $FINAL_IMAGE:$FINAL_IMAGE_TAG echo hello
 
       - name: Push image to Quay
         if: github.event_name == 'push' || github.event_name == 'schedule'
