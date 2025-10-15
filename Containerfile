@@ -23,4 +23,8 @@ RUN /install-kmod-nvidia-open-dkms.sh && rm -f /install-kmod-nvidia-open-dkms.sh
 COPY scripts/install-nvidia-toolkit.sh /
 RUN /install-nvidia-toolkit.sh && rm -f /install-nvidia-toolkit.sh
 
+RUN dnf install -y ramalama && \
+    dnf clean all && \
+    rm -rf /var/lib/dnf /var/cache/* /var/log/dnf5.log
+
 RUN bootc container lint
