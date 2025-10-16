@@ -1,5 +1,6 @@
 ARG BUILDER_IMAGE
 ARG BASE_IMAGE
+ARG STREAM
 
 FROM ${BUILDER_IMAGE} as builder
 
@@ -8,7 +9,7 @@ ARG DRIVER_VERSION
 COPY scripts/build-kmod-nvidia-open-dkms.sh /
 RUN /build-kmod-nvidia-open-dkms.sh
 
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE}:${STREAM}
 
 ARG DRIVER_VERSION
 
