@@ -25,11 +25,8 @@ COPY scripts/install-nvidia-toolkit.sh /
 RUN /install-nvidia-toolkit.sh && rm -f /install-nvidia-toolkit.sh
 
 # Install RamaLama
-# Also add the video group to /etc/passwd in order to be able to add the core user
-# to the group once booted c.f https://github.com/coreos/ignition/issues/1596
 RUN dnf install -y ramalama && \
     dnf clean all && \
-    grep ^video: /usr/lib/group >> /etc/group && \
     rm -rf /var/lib/dnf /var/cache/* /var/log/dnf5.log
 
 RUN bootc container lint
