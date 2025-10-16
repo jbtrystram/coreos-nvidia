@@ -37,3 +37,29 @@ Dual MIT/GPL
 Dual MIT/GPL
 Dual MIT/GPL
 ```
+
+## Serve a LLM with RamaLama
+
+Boot a FCOS image and rebase to an image containing the NVIDIA kernel modules:
+```
+sudo rpm-ostree rebase ostree-unverified-registry:quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --reboot
+```
+
+Install the `nvidia-driver-cuda` sysext to get the NVIDIA CUDA driver and libs:
+```
+sudo systemctl enable --now systemd-sysext
+sudo mkdir -p /var/lib/extensions/
+sudo curl -L https://jcapitao.fedorapeople.org/sysexts/nvidia-driver-cuda-580.95.05-3-580.95.05-1.fc42-42-x86-64.raw \
+     -o /var/lib/extensions/nvidia-driver-cuda-580.95.05.raw
+sudo systemd-sysext refresh
+```
+
+Check if everything is ok:
+```
+nvidia-smi
+```
+
+And finally, serve the requested LLM with RamaLama
+```
+ramalama --engine podman serve -p 8081 --oci-runtime runc --image quay.io/ramalama/cuda:0.12.4 mistral:7b-v3
+```
