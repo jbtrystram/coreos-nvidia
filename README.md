@@ -66,5 +66,5 @@ And finally, serve the requested LLM with RamaLama
 # https://github.com/coreos/butane/issues/411#issuecomment-1407544648
 grep ^video: /usr/lib/group | sudo tee -a /etc/group && sudo usermod -a -G video $USER
 
-ramalama --engine podman serve -p 8081 --oci-runtime runc --image quay.io/ramalama/cuda:0.12.4 mistral:7b-v3
+ramalama --engine podman serve -p 8081 --oci-runtime crun --image quay.io/ramalama/cuda:0.12.4 mistral:7b-v3
 ```
