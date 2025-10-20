@@ -45,14 +45,10 @@ Boot a FCOS image and rebase to an image containing the NVIDIA kernel modules:
 sudo bootc switch quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --apply
 ```
 
-Install the `nvidia-driver-cuda` sysext to get the NVIDIA CUDA driver and libs:
-```
-sudo systemctl enable --now systemd-sysext
-sudo mkdir -p /var/lib/extensions/
-sudo curl -L https://jcapitao.fedorapeople.org/sysexts/nvidia-driver-cuda-580.95.05-3-580.95.05-1.fc42-42-x86-64.raw \
-     -o /var/lib/extensions/nvidia-driver-cuda-580.95.05.raw
-sudo systemd-sysext refresh
-```
+To install and enable the `nvidia-driver-cuda` system extension, follow these instructions https://fedora-sysexts.github.io/community/nvidia-driver-cuda-580.95.05/#usage-instructions
+
+Once the system extension is installed, you will need to create the `nvidia-persistenced` user, following this instruction https://fedora-sysexts.github.io/community/nvidia-driver-cuda-580.95.05/#how-to-use
+
 
 Check if everything is ok:
 ```
