@@ -42,7 +42,7 @@ Dual MIT/GPL
 
 Boot a FCOS image and rebase to an image containing the NVIDIA kernel modules:
 ```
-sudo rpm-ostree rebase ostree-unverified-registry:quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --reboot
+sudo bootc switch quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --apply
 ```
 
 Install the `nvidia-driver-cuda` sysext to get the NVIDIA CUDA driver and libs:
