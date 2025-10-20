@@ -29,4 +29,8 @@ RUN dnf install -y ramalama && \
     dnf clean all && \
     rm -rf /var/lib/dnf /var/cache/* /var/log/dnf5.log
 
+# https://github.com/jbtrystram/coreos-nvidia/issues/14 and
+COPY add-core-to-video-group.service /usr/lib/systemd/system/
+RUN systemctl enable add-core-to-video-group.service
+
 RUN bootc container lint

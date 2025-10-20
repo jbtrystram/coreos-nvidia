@@ -1,0 +1,18 @@
+[Unit]
+Description=Ensure 'video' group exists and add 'core' user
+# This runs before any user-specific configuration services.
+Before=user-setup.service
+
+[Service]
+# Service runs once and exits.
+Type=oneshot
+
+# ExecStart copies the 'video' group definition to /etc/group.
+ExecStart=/bin/sh -c 'grep -q "^video:" /etc/group || grep "^video:" /usr/lib/group >> /etc/group'
+
+# ExecStartPost adds the 'core' user to the 'video' supplementary group.
+ExecStartPost=/usr/sbin/usermod -aG video core
+
+[Install]
+# Enable the service to run on boot.
+WantedBy=multi-user.target
