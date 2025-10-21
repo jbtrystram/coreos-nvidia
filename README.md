@@ -8,6 +8,7 @@ This specialized image is hosted on Quay.io at [quay.io/coreos-devel/fedora-core
 The build process utilizes official NVIDIA DKMS packages from [NVIDIA repo](https://developer.download.nvidia.com/compute/cuda/repos/) to
 compile the open kernel modules, a method usually reserved for the client system.
 Despite requiring a tweak to target the immutable image's specific kernel (rather than the build host's), using DKMS simplifies integration significantly.
+However, this introduces the downside of breaking Secure Boot as the kmods are not signed by the Fedora's key but a self-signed one, which is ok for a POC. For permanent deployment, we'd need to maintain a custom signing key, which adds the extra step of enrolling it with MOK to regain secure booting functionality.
 
 ## Building locally
 ```bash
