@@ -41,15 +41,40 @@ Dual MIT/GPL
 
 ## Serve a LLM with RamaLama
 
-Boot a FCOS image and rebase to an image containing the NVIDIA kernel modules:
+Boot an existing Image Mode system, for example Fedora CoreOS:
+Create a Containerfile to layer the the NVIDIA CUDA driver and libs:
 ```
-sudo bootc switch quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --apply
+cat > Containerfile << 'EOF'
+FROM quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05
+
+ARG VERSION=580.95.05
+
+RUN <<EORUN
+set -xeuo pipefail
+source /usr/lib/os-release
+curl https://developer.download.nvidia.com/compute/cuda/repos/${ID}${VERSION_ID}/$(arch)/cuda-${ID}${VERSION_ID}.repo \
+     -o /etc/yum.repos.d/cuda.repo
+dnf install -y \
+    nvidia-driver-cuda
+dnf clean all
+systemctl enable nvidia-persistenced nvidia-cdi-refresh
+EORUN
+
+RUN bootc container lint
+
+EOF
+```
+Build that container locally
+
+```
+sudo podman build -t fedora-coreos-nvidia .
 ```
 
-To install and enable the `nvidia-driver-cuda` system extension, follow these instructions https://fedora-sysexts.github.io/community/nvidia-driver-cuda-580.95.05/#usage-instructions
+Then switch the system to that build
 
-Once the system extension is installed, you will need to create the `nvidia-persistenced` user, following this instruction https://fedora-sysexts.github.io/community/nvidia-driver-cuda-580.95.05/#how-to-use
-
+```
+sudo bootc switch --transport containers-storage localhost/fedora-coreos-nvidia --apply
+```
 
 Check if everything is ok:
 ```
