@@ -51,18 +51,18 @@ jobs:
       - name: Build FCOS image with NVIDIA bits
         run: |
           NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}-test"
           podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:$FINAL_IMAGE_TAG
 
       - name: Sanity-check
         run: |
           NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}-test"
           podman run --rm $FINAL_IMAGE:$FINAL_IMAGE_TAG echo hello
 
       - name: Push image to Quay
-        if: github.event_name == 'push' || github.event_name == 'schedule'
+        #if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
           NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}-test"
           podman push $FINAL_IMAGE:$FINAL_IMAGE_TAG
