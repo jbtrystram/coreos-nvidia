@@ -14,7 +14,7 @@ However, this introduces the downside of breaking Secure Boot as the kmods are n
 ```bash
 source build-args.conf
 podman build --build-arg-file build-args.conf -f Containerfile.builder -t $BUILDER_IMAGE
-podman build --build-arg-file build-args.conf -f Containerfile -t localhost/fedora-coreos-nvidia:testing-devel
+podman build --build-arg-file build-args.conf -f Containerfile -t localhost/fedora-coreos-nvidia:42-580.95.05
 ```
 
 ## To test it
@@ -43,7 +43,7 @@ Dual MIT/GPL
 
 Boot a FCOS image and rebase to an image containing the NVIDIA kernel modules:
 ```
-sudo bootc switch quay.io/coreos-devel/fedora-coreos-nvidia:stable-580.95.05 --apply
+sudo bootc switch quay.io/coreos-devel/fedora-coreos-nvidia:42-580.95.05 --apply
 ```
 
 To install and enable the `nvidia-driver-cuda` system extension, follow these instructions https://fedora-sysexts.github.io/community/nvidia-driver-cuda-580.95.05/#usage-instructions

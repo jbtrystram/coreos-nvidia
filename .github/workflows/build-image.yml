@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        STREAM: [testing-devel, stable]
+        STREAM: ["42"]
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
