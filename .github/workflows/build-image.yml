@@ -9,7 +9,6 @@ on:
   push:
     branches: [main]
     paths-ignore:
-    paths-ignore:
       - 'README.md'
       - 'LICENSE'
   # Run daily at a specific time (e.g., 04:00 AM UTC)
