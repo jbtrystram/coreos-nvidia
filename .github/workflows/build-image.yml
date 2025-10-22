@@ -33,6 +33,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Calculate image tag and base image
+        id: image-tag
+        run: |
+          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          BASE_IMAGE="quay.io/fedora/fedora-bootc"
+          if [ "${{ matrix.STREAM }}" != "42" ]; then
+            FINAL_IMAGE_TAG="coreos-${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+            BASE_IMAGE="quay.io/fedora/fedora-coreos"
+          fi
+          echo "tag=$FINAL_IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "driver_version=$NVIDIA_DRIVER_VERSION" >> $GITHUB_OUTPUT
+          echo "base_image=$BASE_IMAGE" >> $GITHUB_OUTPUT
+
       - name: Podman Login to Quay
         # This step uses the secret and is executed before pushing
         if: github.event_name == 'push' || github.event_name == 'schedule'
@@ -47,34 +61,18 @@ jobs:
       - name: Build the builder image
         run: |
           source build-args.conf
-          if [ "${{ matrix.STREAM }}" != "42" ]; then
-            BASE_IMAGE="quay.io/fedora/fedora-coreos"
-          fi
-          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="$BASE_IMAGE" -f Containerfile.builder -t $BUILDER_IMAGE
+          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="${{ steps.image-tag.outputs.base_image }}" -f Containerfile.builder -t $BUILDER_IMAGE
 
       - name: Build FCOS image with NVIDIA bits
         run: |
           source build-args.conf
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          if [ "${{ matrix.STREAM }}" != "42" ]; then
-            BASE_IMAGE="quay.io/fedora/fedora-coreos"
-            FINAL_IMAGE_TAG="coreos-${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          fi
-          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="$BASE_IMAGE" -f Containerfile -t $FINAL_IMAGE:$FINAL_IMAGE_TAG
+          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="${{ steps.image-tag.outputs.base_image }}" -f Containerfile -t $FINAL_IMAGE:${{ steps.image-tag.outputs.tag }}
 
       - name: Sanity-check
         run: |
-          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          if [ "${{ matrix.STREAM }}" != "42" ]; then
-            FINAL_IMAGE_TAG="coreos-${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          fi
-          podman run --rm $FINAL_IMAGE:$FINAL_IMAGE_TAG echo hello
+          podman run --rm $FINAL_IMAGE:${{ steps.image-tag.outputs.tag }} echo hello
 
       - name: Push image to Quay
         if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
-          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          podman push $FINAL_IMAGE:$FINAL_IMAGE_TAG
+          podman push $FINAL_IMAGE:${{ steps.image-tag.outputs.tag }}
