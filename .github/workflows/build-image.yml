@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        STREAM: [testing-devel, stable]
+        STREAM: [testing-devel, stable, 42]
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -46,18 +46,29 @@ jobs:
       - name: Build the builder image
         run: |
           source build-args.conf
-          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" -f Containerfile.builder -t $BUILDER_IMAGE
+          if [ "${{ matrix.STREAM }}" != "42" ]; then
+            BASE_IMAGE="quay.io/fedora/fedora-coreos"
+          fi
+          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="$BASE_IMAGE" -f Containerfile.builder -t $BUILDER_IMAGE
 
       - name: Build FCOS image with NVIDIA bits
         run: |
-          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          source build-args.conf
           FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
-          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" -f Containerfile -t $FINAL_IMAGE:$FINAL_IMAGE_TAG
+          if [ "${{ matrix.STREAM }}" != "42" ]; then
+            BASE_IMAGE="quay.io/fedora/fedora-coreos"
+            FINAL_IMAGE_TAG="coreos-${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          fi
+          NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
+          podman build --build-arg-file build-args.conf --build-arg STREAM="${{ matrix.STREAM }}" --build-arg BASE_IMAGE="$BASE_IMAGE" -f Containerfile -t $FINAL_IMAGE:$FINAL_IMAGE_TAG
 
       - name: Sanity-check
         run: |
           NVIDIA_DRIVER_VERSION=$(grep -e "^DRIVER_VERSION" build-args.conf | cut -d= -f2)
           FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          if [ "${{ matrix.STREAM }}" != "42" ]; then
+            FINAL_IMAGE_TAG="coreos-${{ matrix.STREAM }}-${NVIDIA_DRIVER_VERSION}"
+          fi
           podman run --rm $FINAL_IMAGE:$FINAL_IMAGE_TAG echo hello
 
       - name: Push image to Quay
