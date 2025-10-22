@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 env:
-  FINAL_IMAGE: quay.io/coreos-devel/fedora-coreos-nvidia
+  FINAL_IMAGE: quay.io/coreos-devel/fedora-bootc-nvidia
 
 jobs:
   podman_build:

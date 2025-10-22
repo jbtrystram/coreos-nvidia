@@ -1,9 +1,9 @@
-# Fedora CoreOS with NVIDIA drivers and tools
+# Fedora bootc with NVIDIA drivers and tools
 
 **STATUS:** **Work In Progress** — This image is in active development and is not yet ready for production use.
 
-We are deriving Fedora CoreOS (FCOS) images to integrate NVIDIA components (kernel modules, drivers, etc).
-This specialized image is hosted on Quay.io at [quay.io/coreos-devel/fedora-coreos-nvidia](https://quay.io/repository/coreos-devel/fedora-coreos-nvidia?tab=tags).
+We are deriving Fedora bootc images to integrate NVIDIA components (kernel modules, drivers, etc).
+This specialized image is hosted on Quay.io at [quay.io/coreos-devel/fedora-bootc-nvidia](https://quay.io/repository/coreos-devel/fedora-bootc-nvidia?tab=tags).
 
 The build process utilizes official NVIDIA DKMS packages from [NVIDIA repo](https://developer.download.nvidia.com/compute/cuda/repos/) to
 compile the open kernel modules, a method usually reserved for the client system.
@@ -14,7 +14,7 @@ However, this introduces the downside of breaking Secure Boot as the kmods are n
 ```bash
 source build-args.conf
 podman build --build-arg-file build-args.conf -f Containerfile.builder -t $BUILDER_IMAGE
-podman build --build-arg-file build-args.conf -f Containerfile -t localhost/fedora-coreos-nvidia:testing-devel
+podman build --build-arg-file build-args.conf -f Containerfile -t localhost/fedora-bootc-nvidia
 ```
 
 ## To test it
@@ -45,10 +45,10 @@ Boot an existing Image Mode system, for example Fedora CoreOS:
 Create a Containerfile to layer the the NVIDIA CUDA driver and libs:
 ```
 cat > Containerfile << 'EOF'
-ARG STREAM=stable
+ARG STREAM=coreos-stable
 ARG VERSION=580.95.05
 
-FROM quay.io/coreos-devel/fedora-coreos-nvidia:${STREAM}-${VERSION}
+FROM quay.io/coreos-devel/fedora-bootc-nvidia:${STREAM}-${VERSION}
 
 RUN <<EORUN
 set -xeuo pipefail
@@ -68,13 +68,13 @@ EOF
 Build that container locally
 
 ```
-sudo podman build -t fedora-coreos-nvidia .
+sudo podman build -t fedora-bootc-nvidia .
 ```
 
 Then switch the system to that build
 
 ```
-sudo bootc switch --transport containers-storage localhost/fedora-coreos-nvidia --apply
+sudo bootc switch --transport containers-storage localhost/fedora-bootc-nvidia --apply
 ```
 
 Check if everything is ok:
