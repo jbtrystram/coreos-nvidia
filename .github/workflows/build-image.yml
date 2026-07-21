@@ -26,25 +26,29 @@ jobs:
   podman_build:
     name: Podman Build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        STREAM: [43]
-        NVIDIA_DRIVER_VERSION: [595.71.05]
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Read versions from build-args.conf
+        id: versions
+        run: |
+          source build-args.conf
+          echo "stream=${STREAM}" >> $GITHUB_OUTPUT
+          echo "driver=${DRIVER_VERSION}" >> $GITHUB_OUTPUT
+
       - name: Calculate image tag and base image
         id: image-tag
         run: |
-          FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${{ matrix.NVIDIA_DRIVER_VERSION }}"
-          IMAGE_TAG="${{ matrix.STREAM }}"
-          if [[ "${{ matrix.STREAM }}" =~ "coreos" ]]; then
+          STREAM="${{ steps.versions.outputs.stream }}"
+          DRIVER="${{ steps.versions.outputs.driver }}"
+          FINAL_IMAGE_TAG="${STREAM}-${DRIVER}"
+          IMAGE_TAG="${STREAM}"
+          if [[ "${STREAM}" =~ "coreos" ]]; then
             BASE_IMAGE="quay.io/fedora/fedora-coreos"
-            COREOS_STREAM_FULL="${{ matrix.STREAM }}"
+            COREOS_STREAM_FULL="${STREAM}"
             IMAGE_TAG="${COREOS_STREAM_FULL#*-}"
-            FINAL_IMAGE_TAG="${{ matrix.STREAM }}-${{ matrix.NVIDIA_DRIVER_VERSION }}"
+            FINAL_IMAGE_TAG="${STREAM}-${DRIVER}"
           fi
           echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "final_tag=$FINAL_IMAGE_TAG" >> $GITHUB_OUTPUT

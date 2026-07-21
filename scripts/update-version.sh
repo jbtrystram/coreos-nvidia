@@ -33,7 +33,6 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 BUILD_ARGS_CONF="$REPO_ROOT/build-args.conf"
-BUILD_IMAGE_WORKFLOW="$REPO_ROOT/.github/workflows/build-image.yml"
 README="$REPO_ROOT/README.md"
 
 # Read current values for summary
@@ -50,10 +49,6 @@ sed -i "s/^STREAM=.*/STREAM=${STREAM}/" "$BUILD_ARGS_CONF"
 sed -i "s/^DRIVER_VERSION=.*/DRIVER_VERSION=${DRIVER}/" "$BUILD_ARGS_CONF"
 echo "Updated $BUILD_ARGS_CONF"
 
-# Update .github/workflows/build-image.yml
-sed -i "s/^\(\s*STREAM: \[\).*\]/\1${STREAM}]/" "$BUILD_IMAGE_WORKFLOW"
-sed -i "s/^\(\s*NVIDIA_DRIVER_VERSION: \[\).*\]/\1${DRIVER}]/" "$BUILD_IMAGE_WORKFLOW"
-echo "Updated $BUILD_IMAGE_WORKFLOW"
 
 # Update README.md
 sed -i "s/^ARG STREAM=.*/ARG STREAM=${STREAM}/" "$README"
