@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   check-updates:
@@ -88,89 +88,54 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Update type:** ${UPDATE_TYPE}" >> $GITHUB_STEP_SUMMARY
 
-      - name: Check for existing update issue
-        id: check-issue
+      - name: Check for existing update PR
+        id: check-pr
         if: steps.compare.outputs.update_type != 'none'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_STREAM="${{ steps.compare.outputs.new_stream }}"
           NEW_DRIVER="${{ steps.compare.outputs.new_driver }}"
+          BRANCH="update/fedora-${NEW_STREAM}-driver-${NEW_DRIVER}"
 
-          # Search for open issues with the update-available label
-          EXISTING=$(gh issue list --label "update-available" --state open --json title --jq '.[].title' | grep -c "Fedora ${NEW_STREAM}.*${NEW_DRIVER}" || true)
-
-          if [ "$EXISTING" -gt 0 ]; then
+          if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create update issue
-        if: steps.compare.outputs.update_type != 'none' && steps.check-issue.outputs.exists == 'false'
+      - name: Run update script
+        if: steps.compare.outputs.update_type != 'none' && steps.check-pr.outputs.exists == 'false'
+        run: |
+          ./scripts/update-version.sh \
+            --stream "${{ steps.compare.outputs.new_stream }}" \
+            --driver "${{ steps.compare.outputs.new_driver }}"
+
+      - name: Create pull request
+        if: steps.compare.outputs.update_type != 'none' && steps.check-pr.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           UPDATE_TYPE="${{ steps.compare.outputs.update_type }}"
-          CURRENT_STREAM="${{ steps.current.outputs.stream }}"
-          CURRENT_DRIVER="${{ steps.current.outputs.driver }}"
           NEW_STREAM="${{ steps.compare.outputs.new_stream }}"
           NEW_DRIVER="${{ steps.compare.outputs.new_driver }}"
+          BRANCH="update/fedora-${NEW_STREAM}-driver-${NEW_DRIVER}"
 
           if [ "$UPDATE_TYPE" = "fedora_and_driver" ]; then
-            TITLE="Update available: Fedora ${NEW_STREAM} with NVIDIA driver ${NEW_DRIVER}"
-            BODY="## New versions detected
-
-          A new Fedora version is now supported by NVIDIA!
-
-          ### Current versions
-          - **Fedora Stream:** ${CURRENT_STREAM}
-          - **NVIDIA Driver:** ${CURRENT_DRIVER}
-
-          ### Available versions
-          - **Fedora Stream:** ${NEW_STREAM}
-          - **NVIDIA Driver:** ${NEW_DRIVER}
-
-          ### Files to update
-          1. \`build-args.conf\`: Update \`STREAM\` and \`DRIVER_VERSION\`
-          2. \`.github/workflows/build-image.yml\`: Update matrix values
-          3. \`README.md\`: Update ARG values in Containerfile example
-
-          ### Suggested commit message
-          \`\`\`
-          Bump to Fedora ${NEW_STREAM} with NVIDIA driver ${NEW_DRIVER}
-          \`\`\`
-
-          ---
-          *This issue was automatically created by the update checker workflow.*"
+            TITLE="Bump to Fedora ${NEW_STREAM} with NVIDIA driver ${NEW_DRIVER}"
           else
-            TITLE="Update available: NVIDIA driver ${NEW_DRIVER}"
-            BODY="## New NVIDIA driver detected
-
-          A new NVIDIA driver version is available for Fedora ${CURRENT_STREAM}!
-
-          ### Current versions
-          - **Fedora Stream:** ${CURRENT_STREAM}
-          - **NVIDIA Driver:** ${CURRENT_DRIVER}
-
-          ### Available versions
-          - **NVIDIA Driver:** ${NEW_DRIVER}
-
-          ### Files to update
-          1. \`build-args.conf\`: Update \`DRIVER_VERSION\`
-          2. \`.github/workflows/build-image.yml\`: Update \`NVIDIA_DRIVER_VERSION\` in matrix
-          3. \`README.md\`: Update \`ARG VERSION\` in Containerfile example
-
-          ### Suggested commit message
-          \`\`\`
-          Update NVIDIA driver to ${NEW_DRIVER}
-          \`\`\`
-
-          ---
-          *This issue was automatically created by the update checker workflow.*"
+            TITLE="Update NVIDIA driver to ${NEW_DRIVER}"
           fi
 
-          gh issue create --title "$TITLE" --body "$BODY" --label "update-available"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add build-args.conf .github/workflows/build-image.yml README.md
+          git commit -m "$TITLE"
+          git push origin "$BRANCH"
+          gh pr create --title "$TITLE" \
+            --body "Automated version update detected by the check-updates workflow." \
+            --head "$BRANCH"
 
       - name: Summary when no update
         if: steps.compare.outputs.update_type == 'none'
