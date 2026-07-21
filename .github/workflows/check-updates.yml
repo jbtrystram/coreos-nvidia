@@ -113,29 +113,12 @@ jobs:
 
       - name: Create pull request
         if: steps.compare.outputs.update_type != 'none' && steps.check-pr.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          UPDATE_TYPE="${{ steps.compare.outputs.update_type }}"
-          NEW_STREAM="${{ steps.compare.outputs.new_stream }}"
-          NEW_DRIVER="${{ steps.compare.outputs.new_driver }}"
-          BRANCH="update/fedora-${NEW_STREAM}-driver-${NEW_DRIVER}"
-
-          if [ "$UPDATE_TYPE" = "fedora_and_driver" ]; then
-            TITLE="Bump to Fedora ${NEW_STREAM} with NVIDIA driver ${NEW_DRIVER}"
-          else
-            TITLE="Update NVIDIA driver to ${NEW_DRIVER}"
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          git add build-args.conf README.md
-          git commit -m "$TITLE"
-          git push origin "$BRANCH"
-          gh pr create --title "$TITLE" \
-            --body "Automated version update detected by the check-updates workflow." \
-            --head "$BRANCH"
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: update/fedora-${{ steps.compare.outputs.new_stream }}-driver-${{ steps.compare.outputs.new_driver }}
+          title: ${{ steps.compare.outputs.update_type == 'fedora_and_driver' && format('Bump to Fedora {0} with NVIDIA driver {1}', steps.compare.outputs.new_stream, steps.compare.outputs.new_driver) || format('Update NVIDIA driver to {0}', steps.compare.outputs.new_driver) }}
+          body: Automated version update detected by the check-updates workflow.
+          commit-message: ${{ steps.compare.outputs.update_type == 'fedora_and_driver' && format('Bump to Fedora {0} with NVIDIA driver {1}', steps.compare.outputs.new_stream, steps.compare.outputs.new_driver) || format('Update NVIDIA driver to {0}', steps.compare.outputs.new_driver) }}
 
       - name: Summary when no update
         if: steps.compare.outputs.update_type == 'none'
